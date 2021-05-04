@@ -33,8 +33,8 @@ async function createMapFlightRoutes() {
 
     disableBtns();
 
-    const airports = await d3.csv("../data/flights/processed_airports.csv");
-    const flights = await d3.csv("../data/flights/processed_weekly_flights.csv");
+    const airports = await d3.csv("./data/processed_airports.csv");
+    const flights = await d3.csv("./data/processed_weekly_flights.csv");
     const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
 
     loading.remove();
@@ -187,7 +187,7 @@ async function createMapSpikeGraph() {
 
     disableBtns();
 
-    let data = await d3.csv("../data/flights/processed_airports_monthly_incoming.csv", d3.autoType);
+    let data = await d3.csv("./data/processed_airports_monthly_incoming.csv", d3.autoType);
     const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
 
     us.objects.lower48 = {
@@ -322,7 +322,7 @@ async function createMapSpikeGraph() {
 async function createMonthlyFlightsLineGraph() {
     disableBtns();
 
-    let data = await d3.csv("../data/flights/processed_monthly_flights_counts.csv", d3.autoType)
+    let data = await d3.csv("./data/processed_monthly_flights_counts.csv", d3.autoType)
 
     infoTitle.transition().duration(300).text("View from the sky...")
     infoParagraph.transition().duration(300).text("Over the two year period (2019-2021) accounted for in our analysis, the total number of domestic flights peaked in Decemeber, 2019 at a total of 236,507 flights. However, as the virus spread rapidly and nation-wide travel bans took effect, total flight numbers took a nosedive in March and April of 2020, before bottoming out in May of the same year at 69,372 total flights.")
@@ -439,7 +439,7 @@ async function createChangeChart() {
 
     disableBtns();
 
-    let data = await d3.csv("../data/flights/processed_monthly_flights_counts.csv", d3.autoType)
+    let data = await d3.csv("./data/processed_monthly_flights_counts.csv", d3.autoType)
 
     infoTitle.transition().duration(300).text("Drastic fall...");
     infoParagraph.transition().duration(300).text("In this graphic, we see the percentage-change in monthly flight totals, using January, 2019 as our baseline. Between March and May of 2019, the airline industry witnessed a decrease of over 40% from our basline.");
@@ -571,7 +571,7 @@ async function createAirlineGraph() {
 
     disableBtns();
 
-    let data = createMonthlyAirlineSeries(await d3.csv("../data/flights/processed_monthly_flights_airline.csv", d3.autoType))
+    let data = createMonthlyAirlineSeries(await d3.csv("./data/processed_monthly_flights_airline.csv", d3.autoType))
 
     infoTitle.text("Major airlines took a hit...");
     infoParagraph.text("None of the major domestic airlines were spared from the impacts of the pandemic. For example, in May, 2020 Southwest Airlines, the largest domestic carrier by flight totals, operated at roughly 57% its capacity from the year before. Likewise, Allegiant Air, the smallest carrier, operated at just 16% of its capacity a year prior. Hover over the graph to see the monthly totals for each airline.");
@@ -673,7 +673,7 @@ async function createDonutChart() {
 
     disableBtns();
 
-    let data = await d3.csv("../data/flights/processed_monthly_flights_airline.csv", d3.autoType);
+    let data = await d3.csv("./data/processed_monthly_flights_airline.csv", d3.autoType);
     data = data.filter((d) => +d.year == 2019 && +d.month == 1);
 
     let margin = ({ top: 200, right: 0, bottom: screenHeight / 4, left: 200 })
