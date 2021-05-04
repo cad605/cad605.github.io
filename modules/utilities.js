@@ -30,6 +30,38 @@ function createMonthlyAirlineSeries(d) {
 	};
 }
 
+function dodge(positions, separation = 10, maxiter = 10, maxerror = 1e-1) {
+	positions = Array.from(positions);
+	let n = positions.length;
+	if (!positions.every(isFinite)) throw new Error("invalid position");
+	if (!(n > 1)) return positions;
+	let index = d3.range(positions.length);
+	for (let iter = 0; iter < maxiter; ++iter) {
+		index.sort((i, j) => d3.ascending(positions[i], positions[j]));
+		let error = 0;
+		for (let i = 1; i < n; ++i) {
+			let delta = positions[index[i]] - positions[index[i - 1]];
+			if (delta < separation) {
+				delta = (separation - delta) / 2;
+				error = Math.max(error, delta);
+				positions[index[i - 1]] -= delta;
+				positions[index[i]] += delta;
+			}
+		}
+		if (error < maxerror) break;
+	}
+	return positions;
+}
+
+function halo(text) {
+	text.clone(true)
+		.each(function () { this.parentNode.insertBefore(this, this.previousSibling); })
+		.attr("fill", "none")
+		.attr("stroke", "white")
+		.attr("stroke-width", 4)
+		.attr("stroke-linejoin", "round");
+}
+
 function hover(svg, path, x, y, data) {
 
 	if ("ontouchstart" in document) svg
@@ -135,9 +167,7 @@ function lastStage() {
 }
 
 function updateStage(stage) {
-	if (stage == 0) {
-		createMapFlightRoutes();
-	} else if (stage == 1) {
+	if (stage == 1) {
 		createMapSpikeGraph();
 	} else if (stage == 2) {
 		createMonthlyFlightsLineGraph();
@@ -146,7 +176,13 @@ function updateStage(stage) {
 	} else if (stage == 4) {
 		createAirlineGraph();
 	} else if (stage == 5) {
-		createDonutChart();
+		createSlopeGraph();
+	} else if (stage == 6){
+		end();
+	} else {
+		currentStage = 0;
+		svg.attr("viewBox", [0, 0, 1200, 1200])
+		createMapFlightRoutes();
 	}
 }
 

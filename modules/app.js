@@ -7,8 +7,9 @@ const projection = d3.geoAlbers()
 const path = d3.geoPath().projection(projection)
 
 const svg = d3.select("#viz").append("svg")
+    .attr("viewBox", [0, 0, 1100, 1100])
     .attr("width", "100%")
-    .attr("height", "95%");
+    .attr("height", "100%");
 
 const controls = d3.select("#controls-container").append("div");
 const infoTitle = d3.select("#info-title");
@@ -266,7 +267,7 @@ async function createMapSpikeGraph() {
         .selectAll("g")
         .data(length.ticks(6).slice(1).reverse())
         .join("g")
-        .attr("transform", (d, i) => `translate(${200 - (i + 1) * 18},${screenHeight-200})`);
+        .attr("transform", (d, i) => `translate(${200 - (i + 1) * 18},${screenHeight - 200})`);
 
     legend.append("path")
         .attr("fill", "steelblue")
@@ -574,8 +575,8 @@ async function createAirlineGraph() {
     let data = createMonthlyAirlineSeries(await d3.csv("/data/processed_monthly_flights_airline.csv", d3.autoType))
 
     infoTitle.text("Major airlines took a hit...");
-    infoParagraph.text("None of the major domestic airlines were spared from the impacts of the pandemic. For example, in May, 2020 Southwest Airlines, the largest domestic carrier by flight totals, operated at roughly 57% its capacity from the year before. Likewise, Allegiant Air, the smallest carrier, operated at just 16% of its capacity a year prior. Hover over the graph to see the monthly totals for each airline.");
-    infoParagraphGraph.text("There is cause for optimism, however, as vaccination rates continue to increase throughtout the United States and travel bans are lifted, airlines may see demand skyrocket.");
+    infoParagraph.text("None of the major domestic airlines were spared from the impacts of the pandemic.");
+    infoParagraphGraph.text("For example, in May, 2020 Southwest Airlines, the largest domestic carrier by flight totals, operated at roughly 57% its capacity from the year before. Likewise, Allegiant Air, the smallest carrier, operated at just 16% of its capacity for the same period a year prior. Hover over the graph to see the monthly totals for each airline.");
 
 
     let margin = ({ top: 200, right: 0, bottom: screenHeight / 4, left: 200 })
@@ -667,6 +668,118 @@ async function createAirlineGraph() {
         });
 
     enableBtns();
+}
+
+async function createSlopeGraph() {
+
+    disableBtns();
+    loading.remove();
+
+    let data = await d3.csv("/data/processed_monthly_flights_airline.csv", d3.autoType);
+
+    data = data.filter(d => d.year == 2019 && d.month == 5 || d.year == 2020 && d.month == 5 || d.year == 2021 && d.month == 2)
+    const airlines = [...new Set(data.map((d) => d.airline))];
+
+    data = airlines.map(function (d) {
+        return {
+            name: d,
+            values: data.filter((cd) => cd.airline === d).map((ld) => ld.count)
+        }
+    })
+
+    console.log(data)
+
+    infoTitle.text("On the horizon...");
+    infoParagraph.text("There is cause for optimism, however, as vaccination rates continue to increase throughtout the United States and travel bans are lifted, airlines may see demand lift off in the coming months.");
+    infoParagraphGraph.text("For example, from the slope graph to left, we see that Delta Airlines is operating more flights in March, 2021 (31,342) than it had in May, 2019 (27,286).");
+
+
+    let margin = ({ top: 200, right: 0, bottom: screenHeight / 4, left: 200 })
+    let height = screenHeight;
+    let width = screenWidth;
+    let padding = 10;
+
+    let columns = ["May 2019", "May 2020", "March 2021"];
+    let n = columns.length;
+
+    let x = d3.scalePoint()
+        .domain(d3.range(n))
+        .range([margin.left, width - margin.right])
+        .padding(0.5)
+
+    let y = d3.scaleLinear()
+        .domain(d3.extent(data.flatMap(d => d.values)))
+        .range([height - margin.bottom, margin.top])
+
+    let line = d3.line()
+        .x((d, i) => x(i))
+        .y(y)
+
+    let formatNumber = y.tickFormat(100)
+
+    svg.attr("viewBox", [0, 0, width, height])
+
+    svg.append("g")
+        .attr("text-anchor", "middle")
+        .selectAll("g")
+        .data(columns)
+        .join("g")
+        .attr("transform", (d, i) => `translate(${x(i)},20)`)
+        .call(g => g.append("text").attr("font-size", 20).attr("font-weight", "bold").text(d => d))
+        .call(g => g.append("line").attr("y1", 3).attr("y2", 9).attr("stroke", "currentColor"));
+
+    svg.append("g")
+        .attr("fill", "none")
+        .attr("stroke", "currentColor")
+        .selectAll("path")
+        .data(data)
+        .join("path")
+        .attr("d", d => line(d.values))
+        .attr("stroke", d => airlineColor.get(d.name))
+        .transition().duration(5000)
+        .ease(d3.easeLinear)
+        .attrTween("stroke-dasharray", function (d) {
+            const length = this.getTotalLength();
+            return d3.interpolate(`0,${length}`, `${length},${length}`);
+        })
+
+    svg.append("g")
+        .selectAll("g")
+        .data(columns)
+        .join("g")
+        .attr("transform", (d, i) => `translate(${x(i) + (i === 0 ? -padding : i === n - 1 ? padding : 0)},0)`)
+        .attr("text-anchor", (d, i) => i === 0 ? "end" : i === n - 1 ? "start" : "middle")
+        .selectAll("text")
+        .data((d, i) => d3.zip(
+            data.map(i === 0 ? d => `${d.name} ${formatNumber(d.values[i])}`
+                : i === n - 1 ? d => `${formatNumber(d.values[i])} ${d.name}`
+                    : d => `${formatNumber(d.values[i])}`),
+            dodge(data.map(d => y(d.values[i])))))
+        .join("text")
+        .attr("y", ([, y]) => y)
+        .attr("dy", "0.35em")
+        .text(([text]) => text)
+        .call(halo);
+
+    enableBtns();
+}
+
+function end() {
+
+    d3.select("#loading-spinner").remove()
+
+    infoTitle.text("The end...");
+    infoParagraph.text("Please view the acknowledgments to the left. We are grateful for the open source data that powers this application.");
+    infoParagraphGraph.text("");
+
+    svg.append("g").append("text").attr("class", "paragraph-title").attr("x", screenWidth - (.95 * screenWidth)).attr("y", 70).text("This application relies on the following datasets:")
+    svg.append("text").attr("class", "paragraph").attr("y", 145).transition().duration(600).attr("x", screenWidth / 8).text("👉 Open source flight data provided by OpenSky Network at www.opensky-network.org")
+    svg.append("text").attr("class", "paragraph").attr("y", 200).transition().duration(600).attr("x", screenWidth / 8).text("👉 Airport location data provided by OurAirports at www.ourairports.com")
+
+    svg.append("g").append("text").attr("class", "paragraph-title").attr("x", screenWidth - (.95 * screenWidth)).attr("y", 350).text("Created for CS-GY-6513: Big Data at NYU Tandon by:")
+    svg.append("text").attr("class", "paragraph").attr("y", 425).transition().duration(600).attr("x", screenWidth / 8).text("👉 Christopher Donnelly")
+    svg.append("text").attr("class", "paragraph").attr("y", 500).transition().duration(600).attr("x", screenWidth / 8).text("👉 Eric Yuzhuo Lu")
+    svg.append("text").attr("class", "paragraph").attr("y", 575).transition().duration(600).attr("x", screenWidth / 8).text("👉 Benjamin Teo")
 }
 
 async function createDonutChart() {
