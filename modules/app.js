@@ -198,7 +198,7 @@ async function createMapSpikeGraph() {
 
     infoTitle.transition().duration(300).text("Incoming Flights")
     infoParagraph.transition().duration(300).text("The map to the left shows the number of incoming flights to major airports within the continental United States.");
-    infoParagraphGraph.transition().duration(300).text("By May of 2020, the number of incoming flights between major domestic airports decreased dramatically. For example, in May, 2019 JFK saw a total of 4,858 flights; however, one year later, as the pandemic devestated New York, the airport saw a total of only 549 flights, or just 11% of the previous year.")
+    infoParagraphGraph.transition().duration(300).text("By May of 2020, the number of incoming flights between major domestic airports decreased dramatically. For example, in May, 2019 JFK saw a total of 4,858 flights; however, one year later, as the pandemic devastated New York, the airport saw a total of only 549 flights, or just 11% of the previous year.")
 
     let month = d3.min(data, d => parseInt(d.month));
     let year = d3.min(data, d => parseInt(d.year));
